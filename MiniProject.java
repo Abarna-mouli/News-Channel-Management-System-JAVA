@@ -41,7 +41,7 @@ class NewsChannel extends Channel {
     }
 }
 
-public class OopsGUI extends Application {
+public class NewChannelApp extends Application {
     private List<Channel> programs = new ArrayList<>();
     private TextArea outputArea;
 
