@@ -1,7 +1,11 @@
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import javafx.application.Application;
+import javafx.geometry.Insets;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+import javafx.stage.Stage;
+import javafx.scene.text.Font;
+import java.util.*;
 
 abstract class Channel {
     private String programName;
@@ -18,191 +22,151 @@ abstract class Channel {
         this.business = business;
     }
 
-    public String getProgramName() {
-        return programName;
-    }
-
-    public void setProgramName(String programName) {
-        this.programName = programName;
-    }
-
-    public String getAnchor() {
-        return anchor;
-    }
-
-    public void setAnchor(String anchor) {
-        this.anchor = anchor;
-    }
-
-    public int getMonth() {
-        return month;
-    }
-
-    public void setMonth(int month) {
-        this.month = month;
-    }
-
-    public double getTrpRating() {
-        return trpRating;
-    }
-
-    public void setTrpRating(double trpRating) {
-        this.trpRating = trpRating;
-    }
-
-    public double getBusiness() {
-        return business;
-    }
-
-    public void setBusiness(double business) {
-        this.business = business;
-    }
-
+    public String getProgramName() { return programName; }
+    public String getAnchor() { return anchor; }
+    public int getMonth() { return month; }
+    public double getTrpRating() { return trpRating; }
+    public double getBusiness() { return business; }
     public abstract void display();
 }
 
-class NewChannel extends Channel {
-    public NewChannel(String programName, String anchor, int month, double trpRating, double business) {
+class NewsChannel extends Channel {
+    public NewsChannel(String programName, String anchor, int month, double trpRating, double business) {
         super(programName, anchor, month, trpRating, business);
     }
 
     @Override
     public void display() {
-        System.out.println("\nProgram name: " + getProgramName() +
-                "\nAnchor: " + getAnchor() +
-                "\nMonth: " + getMonth() +
-                "\nTRP rating: " + getTrpRating() +
-                "\nBusiness profit (in millions): " + getBusiness());
+        System.out.println("Program: " + getProgramName() + ", Anchor: " + getAnchor());
     }
 }
 
-public class OopsGUI {
-    private JFrame frame;
-    private JTextArea outputArea;
-    private Channel[] programs;
-    private int programCount = 0;
+public class OopsGUI extends Application {
+    private List<Channel> programs = new ArrayList<>();
+    private TextArea outputArea;
 
-    public OopsGUI() {
-        frame = new JFrame("News Channel Programs");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(600, 400);
+    @Override
+    public void start(Stage primaryStage) {
+        primaryStage.setTitle("News Channel Management");
+        BorderPane layout = new BorderPane();
 
-        JPanel panel = new JPanel();
-        panel.setLayout(new GridLayout(0, 1));
+        VBox controlPanel = new VBox(10);
+        controlPanel.setPadding(new Insets(10));
+        controlPanel.setStyle("-fx-background-color: #336699;");
 
-        JButton addProgramButton = new JButton("Add Program");
-        addProgramButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                addProgram();
-            }
-        });
-        panel.add(addProgramButton);
+        Button addProgramButton = new Button("Add Program");
+        Button maxCollectionButton = new Button("Max Collection Month");
+        Button busyAnchorButton = new Button("Busiest Anchor");
+        Button sortByTRPButton = new Button("Sort by TRP");
+        Button leastTRPButton = new Button("Least TRP Program");
 
-        JButton maxCollectionButton = new JButton("Find Max Collection Month");
-        maxCollectionButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                findMaxCollectionMonth();
-            }
-        });
-        panel.add(maxCollectionButton);
+        controlPanel.getChildren().addAll(addProgramButton, maxCollectionButton, busyAnchorButton, sortByTRPButton, leastTRPButton);
 
-        JButton busyAnchorButton = new JButton("Find Busy Anchor");
-        busyAnchorButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                findBusyAnchor();
-            }
-        });
-        panel.add(busyAnchorButton);
+        outputArea = new TextArea();
+        outputArea.setFont(Font.font("Verdana", 14));
+        outputArea.setStyle("-fx-control-inner-background: #e6f2ff;");
 
-        outputArea = new JTextArea();
-        JScrollPane scrollPane = new JScrollPane(outputArea);
-        frame.getContentPane().add(panel, BorderLayout.NORTH);
-        frame.getContentPane().add(scrollPane, BorderLayout.CENTER);
+        layout.setLeft(controlPanel);
+        layout.setCenter(outputArea);
+
+        addProgramButton.setOnAction(e -> addProgram());
+        maxCollectionButton.setOnAction(e -> findMaxCollectionMonth());
+        busyAnchorButton.setOnAction(e -> findBusyAnchor());
+        sortByTRPButton.setOnAction(e -> sortByTRP());
+        leastTRPButton.setOnAction(e -> findLeastTRPProgram());
+
+        primaryStage.setScene(new Scene(layout, 700, 500));
+        primaryStage.show();
     }
 
     private void addProgram() {
-        String programName = JOptionPane.showInputDialog("Enter the program name:");
-        String anchor = JOptionPane.showInputDialog("Enter the Anchor name:");
-        int month = Integer.parseInt(JOptionPane.showInputDialog("Enter the month:"));
-        double trpRating = Double.parseDouble(JOptionPane.showInputDialog("Enter the TRP Rating:"));
-        double business = Double.parseDouble(JOptionPane.showInputDialog("Enter the Business profit (in millions):"));
+        try {
+            String programName = showInputDialog("Enter Program Name:");
+            if (programName.isEmpty()) { showWarning("Program Name cannot be empty!"); return; }
 
-        if (programs == null) {
-            programs = new Channel[10]; // assuming a max of 10 programs
+            String anchor = showInputDialog("Enter Anchor Name:");
+            if (anchor.isEmpty()) { showWarning("Anchor Name cannot be empty!"); return; }
+
+            int month = Integer.parseInt(showInputDialog("Enter Month (1-12):"));
+            if (month < 1 || month > 12) { showWarning("Month must be between 1 and 12!"); return; }
+
+            double trpRating = Double.parseDouble(showInputDialog("Enter TRP Rating:"));
+            double business = Double.parseDouble(showInputDialog("Enter Business Profit (in millions):"));
+
+            programs.add(new NewsChannel(programName, anchor, month, trpRating, business));
+            outputArea.appendText("Added: " + programName + "\n");
+        } catch (NumberFormatException e) {
+            showWarning("Invalid input! Please enter numbers for Month, TRP Rating, and Business Profit.");
         }
-        programs[programCount++] = new NewChannel(programName, anchor, month, trpRating, business);
-        outputArea.append("Added program: " + programName + "\n");
+    }
+
+    private String showInputDialog(String message) {
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setContentText(message);
+        Optional<String> result = dialog.showAndWait();
+        return result.orElse("").trim();
+    }
+
+    private void showWarning(String message) {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle("Warning");
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 
     private void findMaxCollectionMonth() {
-        if (programs == null) return;
         double[] monthlyTotal = new double[12];
-
-        for (int i = 0; i < programCount; i++) {
-            monthlyTotal[programs[i].getMonth() - 1] += programs[i].getBusiness();
+        for (Channel program : programs) {
+            monthlyTotal[program.getMonth() - 1] += program.getBusiness();
         }
-
-        double maxProfit = 0;
         int maxMonth = 0;
-
-        for (int i = 0; i < monthlyTotal.length; i++) {
+        double maxProfit = 0;
+        for (int i = 0; i < 12; i++) {
             if (monthlyTotal[i] > maxProfit) {
                 maxProfit = monthlyTotal[i];
                 maxMonth = i + 1;
             }
         }
-
-        outputArea.append("\nMonth with maximum collection: " + maxMonth + "\n");
-        double totalProfit = 0;
-        for (int i = 0; i < programCount; i++) {
-            if (programs[i].getMonth() == maxMonth) {
-                outputArea.append("Program name: " + programs[i].getProgramName() + "\tProfit: " + programs[i].getBusiness() + " million\n");
-                totalProfit += programs[i].getBusiness();
-            }
-        }
-        outputArea.append("Total profit for the month: " + totalProfit + " million\n");
+        outputArea.appendText("\nMonth with max profit: " + maxMonth + "\n");
     }
 
     private void findBusyAnchor() {
-        if (programs == null) return;
-        String busiestAnchor = "";
-        int maxCount = 0;
-
-        for (int i = 0; i < programCount; i++) {
-            int count = 1;
-            for (int j = 0; j < programCount; j++) {
-                if (i != j && programs[j].getAnchor().equals(programs[i].getAnchor())) {
-                    count++;
-                }
-            }
-            if (count > maxCount) {
-                maxCount = count;
-                busiestAnchor = programs[i].getAnchor();
+        Map<String, Integer> anchorCount = new HashMap<>();
+        for (Channel program : programs) {
+            anchorCount.put(program.getAnchor(), anchorCount.getOrDefault(program.getAnchor(), 0) + 1);
+        }
+        int maxPrograms = Collections.max(anchorCount.values());
+        if (maxPrograms == 1) {
+            outputArea.appendText("\nNo busy anchors\n");
+            return;
+        }
+        List<String> busiestAnchors = new ArrayList<>();
+        for (Map.Entry<String, Integer> entry : anchorCount.entrySet()) {
+            if (entry.getValue() == maxPrograms) {
+                busiestAnchors.add(entry.getKey());
             }
         }
+        outputArea.appendText("\nBusiest Anchor(s): " + String.join(", ", busiestAnchors) + "\n");
+    }
 
-        if (maxCount <= 1) {
-            outputArea.append("\nThere is no busy anchor\n");
-        } else {
-            outputArea.append("\nBusiest anchor: " + busiestAnchor + "\n");
-            outputArea.append("Number of programs: " + maxCount + "\n");
+    private void sortByTRP() {
+        programs.sort(Comparator.comparingDouble(Channel::getTrpRating).reversed());
+        outputArea.appendText("\nPrograms sorted by TRP:\n");
+        for (Channel program : programs) {
+            outputArea.appendText(program.getProgramName() + " - TRP: " + program.getTrpRating() + "\n");
         }
     }
 
+    private void findLeastTRPProgram() {
+        if (programs.isEmpty()) {
+            outputArea.appendText("\nNo programs available to analyze.\n");
+            return;
+        }
+        Channel leastTRP = Collections.min(programs, Comparator.comparingDouble(Channel::getTrpRating));
+        outputArea.appendText("\nProgram with least TRP: " + leastTRP.getProgramName() + " - TRP: " + leastTRP.getTrpRating() + "\n");
+    }
+
     public static void main(String[] args) {
-        EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    OopsGUI window = new OopsGUI();
-                    window.frame.setVisible(true);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        });
+        launch(args);
     }
 }
